@@ -2,6 +2,10 @@
   <img src="assets/logo.png" alt="dotcloak" width="400" />
 </p>
 
+<p align="center">
+  <a href="./README.ja.md">日本語</a> | English
+</p>
+
 # dotcloak
 
 > Encrypt your `.env` so AI coding tools can only read ciphertext.
