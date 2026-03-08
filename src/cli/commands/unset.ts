@@ -1,6 +1,7 @@
 import * as path from 'node:path'
 import type { Command } from 'commander'
 import { unsetSecret } from '../../core/secret-manager.js'
+import { fail, withCliErrorHandling } from '../errors.js'
 
 export function registerUnsetCommand(program: Command): void {
   program
@@ -8,16 +9,20 @@ export function registerUnsetCommand(program: Command): void {
     .description('Remove a secret')
     .argument('<key>', 'Key to remove')
     .option('-f, --file <path>', 'Path to .env.cloak file', '.env.cloak')
-    .action(async (key: string, options: { file: string }) => {
-      const projectDir = process.cwd()
-      const cloakPath = path.resolve(projectDir, options.file)
+    .action(
+      withCliErrorHandling(async (key: string, options: { file: string }) => {
+        const projectDir = process.cwd()
+        const cloakPath = path.resolve(projectDir, options.file)
 
-      const removed = await unsetSecret(projectDir, cloakPath, key)
-      if (removed) {
+        const removed = await unsetSecret(projectDir, cloakPath, key)
+        if (!removed) {
+          fail(
+            `Secret '${key}' was not found.`,
+            "Use 'dotcloak list' to confirm the key name before removing it.",
+          )
+        }
+
         console.log(`Removed ${key}`)
-      } else {
-        console.error(`Key not found: ${key}`)
-        process.exit(1)
-      }
-    })
+      }, "Run 'dotcloak init' first or confirm the key exists before unsetting it."),
+    )
 }

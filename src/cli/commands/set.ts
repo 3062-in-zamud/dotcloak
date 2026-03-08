@@ -1,27 +1,37 @@
 import * as path from 'node:path'
 import type { Command } from 'commander'
 import { setSecret } from '../../core/secret-manager.js'
+import { fail, withCliErrorHandling } from '../errors.js'
+import { promptHiddenValue } from '../prompt-secret.js'
 
 export function registerSetCommand(program: Command): void {
   program
     .command('set')
-    .description('Set a secret (KEY=VALUE)')
-    .argument('<keyvalue>', 'Key=Value pair')
+    .description('Set a secret (KEY=VALUE or hidden prompt)')
+    .argument('<key-or-key=value>', 'Key name or Key=Value pair')
     .option('-f, --file <path>', 'Path to .env.cloak file', '.env.cloak')
-    .action(async (keyvalue: string, options: { file: string }) => {
-      const projectDir = process.cwd()
-      const cloakPath = path.resolve(projectDir, options.file)
+    .action(
+      withCliErrorHandling(async (keyOrKeyValue: string, options: { file: string }) => {
+        const projectDir = process.cwd()
+        const cloakPath = path.resolve(projectDir, options.file)
 
-      const eqIndex = keyvalue.indexOf('=')
-      if (eqIndex === -1) {
-        console.error('Error: Use KEY=VALUE format')
-        process.exit(1)
-      }
+        const eqIndex = keyOrKeyValue.indexOf('=')
+        const hasInlineValue = eqIndex !== -1
+        const key = hasInlineValue ? keyOrKeyValue.slice(0, eqIndex) : keyOrKeyValue
 
-      const key = keyvalue.slice(0, eqIndex)
-      const value = keyvalue.slice(eqIndex + 1)
+        if (key.trim().length === 0) {
+          fail(
+            'Secret key is empty.',
+            "Use 'dotcloak set KEY=VALUE' or 'dotcloak set KEY' with a non-empty key.",
+          )
+        }
 
-      await setSecret(projectDir, cloakPath, key, value)
-      console.log(`Set ${key}`)
-    })
+        const value = hasInlineValue
+          ? keyOrKeyValue.slice(eqIndex + 1)
+          : await promptHiddenValue(`Enter value for ${key}: `)
+
+        await setSecret(projectDir, cloakPath, key, value)
+        console.log(`Set ${key}`)
+      }, "Use 'dotcloak set KEY=VALUE' or 'dotcloak set KEY' and try again."),
+    )
 }

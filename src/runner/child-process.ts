@@ -14,7 +14,7 @@ export function runWithSecrets(command: string, args: string[], secrets: EnvMap)
     })
 
     child.on('error', (err) => {
-      reject(new Error(`Failed to start process: ${err.message}`))
+      reject(new Error(`Failed to start command "${command}": ${err.message}`))
     })
 
     child.on('exit', (code) => {

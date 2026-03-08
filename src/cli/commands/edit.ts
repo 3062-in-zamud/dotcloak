@@ -9,39 +9,51 @@ import { parse, stringify } from '../../core/env-parser.js'
 import { getSecrets } from '../../core/secret-manager.js'
 import { encrypt } from '../../crypto/age-engine.js'
 import { loadIdentity } from '../../crypto/key-manager.js'
+import { CliError, withCliErrorHandling } from '../errors.js'
 
 export function registerEditCommand(program: Command): void {
   program
     .command('edit')
     .description('Edit secrets in your $EDITOR')
     .option('-f, --file <path>', 'Path to .env.cloak file', '.env.cloak')
-    .action(async (options: { file: string }) => {
-      const editor = process.env.EDITOR || process.env.VISUAL || 'vi'
-      const projectDir = process.cwd()
-      const cloakPath = path.resolve(projectDir, options.file)
+    .action(
+      withCliErrorHandling(async (options: { file: string }) => {
+        const editor = process.env.EDITOR || process.env.VISUAL || 'vi'
+        const projectDir = process.cwd()
+        const cloakPath = path.resolve(projectDir, options.file)
 
-      const secrets = await getSecrets(projectDir, cloakPath)
-      const plaintext = stringify(secrets)
+        const secrets = await getSecrets(projectDir, cloakPath)
+        const plaintext = stringify(secrets)
 
-      const tmpFile = path.join(os.tmpdir(), `dotcloak-edit-${Date.now()}.env`)
-      fs.writeFileSync(tmpFile, plaintext, { mode: 0o600 })
+        const tmpFile = path.join(os.tmpdir(), `dotcloak-edit-${Date.now()}.env`)
+        fs.writeFileSync(tmpFile, plaintext, { mode: 0o600 })
 
-      try {
-        execSync(`${editor} "${tmpFile}"`, { stdio: 'inherit' })
-        const edited = fs.readFileSync(tmpFile, 'utf-8')
-        const newSecrets = parse(edited)
+        try {
+          try {
+            execSync(`${editor} "${tmpFile}"`, { stdio: 'inherit' })
+          } catch (error) {
+            throw new CliError(
+              `Editor '${editor}' failed while editing secrets.`,
+              'Set $EDITOR to a working editor and rerun the command.',
+              { cause: error },
+            )
+          }
 
-        const identity = loadIdentity(projectDir)
-        const recipient = await age.identityToRecipient(identity)
-        const newPlaintext = stringify(newSecrets)
-        const armored = await encrypt(newPlaintext, recipient)
-        writeCloakFile(cloakPath, armored)
+          const edited = fs.readFileSync(tmpFile, 'utf-8')
+          const newSecrets = parse(edited)
 
-        console.log('Secrets updated.')
-      } finally {
-        if (fs.existsSync(tmpFile)) {
-          fs.unlinkSync(tmpFile)
+          const identity = loadIdentity(projectDir)
+          const recipient = await age.identityToRecipient(identity)
+          const newPlaintext = stringify(newSecrets)
+          const armored = await encrypt(newPlaintext, recipient)
+          writeCloakFile(cloakPath, armored)
+
+          console.log('Secrets updated.')
+        } finally {
+          if (fs.existsSync(tmpFile)) {
+            fs.unlinkSync(tmpFile)
+          }
         }
-      }
-    })
+      }, 'Verify your editor configuration and rerun the edit command.'),
+    )
 }

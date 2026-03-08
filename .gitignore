@@ -5,3 +5,7 @@ coverage/
 *.env
 .env.*
 !.env.example
+
+# Claude Code internal files
+**/CLAUDE.md
+.claude/

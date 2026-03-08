@@ -1,6 +1,7 @@
 import * as path from 'node:path'
 import type { Command } from 'commander'
 import { getSecrets, maskValue } from '../../core/secret-manager.js'
+import { withCliErrorHandling } from '../errors.js'
 
 export function registerListCommand(program: Command): void {
   program
@@ -8,20 +9,22 @@ export function registerListCommand(program: Command): void {
     .description('List all secrets (masked values)')
     .option('-f, --file <path>', 'Path to .env.cloak file', '.env.cloak')
     .option('--show', 'Show actual values (use with caution)')
-    .action(async (options: { file: string; show?: boolean }) => {
-      const projectDir = process.cwd()
-      const cloakPath = path.resolve(projectDir, options.file)
+    .action(
+      withCliErrorHandling(async (options: { file: string; show?: boolean }) => {
+        const projectDir = process.cwd()
+        const cloakPath = path.resolve(projectDir, options.file)
 
-      const secrets = await getSecrets(projectDir, cloakPath)
+        const secrets = await getSecrets(projectDir, cloakPath)
 
-      if (secrets.size === 0) {
-        console.log('No secrets found.')
-        return
-      }
+        if (secrets.size === 0) {
+          console.log('No secrets found.')
+          return
+        }
 
-      for (const [key, value] of secrets) {
-        const displayValue = options.show ? value : maskValue(value)
-        console.log(`${key}=${displayValue}`)
-      }
-    })
+        for (const [key, value] of secrets) {
+          const displayValue = options.show ? value : maskValue(value)
+          console.log(`${key}=${displayValue}`)
+        }
+      }, "Run 'dotcloak init' first or pass '--file <path>' to an existing .env.cloak file."),
+    )
 }

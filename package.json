@@ -28,12 +28,20 @@
     "env",
     "environment-variables"
   ],
-  "author": "",
+  "author": "3062-in-zamud",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3062-in-zamud/dotcloak.git"
+  },
+  "homepage": "https://github.com/3062-in-zamud/dotcloak",
+  "bugs": {
+    "url": "https://github.com/3062-in-zamud/dotcloak/issues"
+  },
   "engines": {
     "node": ">=20"
   },
-  "files": ["dist"],
+  "files": ["dist/cli"],
   "dependencies": {
     "age-encryption": "^0.3.0",
     "commander": "^14.0.0",
