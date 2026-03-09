@@ -6,6 +6,10 @@
   日本語 | <a href="./README.md">English</a>
 </p>
 
+[![CI](https://github.com/3062-in-zamud/dotcloak/actions/workflows/ci.yml/badge.svg)](https://github.com/3062-in-zamud/dotcloak/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/dotcloak.svg)](https://www.npmjs.com/package/dotcloak)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 # dotcloak
 
 > `.env` を暗号化して、AI コーディングツールに暗号文しか見せない。

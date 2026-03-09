@@ -6,6 +6,10 @@
   <a href="./README.ja.md">日本語</a> | English
 </p>
 
+[![CI](https://github.com/3062-in-zamud/dotcloak/actions/workflows/ci.yml/badge.svg)](https://github.com/3062-in-zamud/dotcloak/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/dotcloak.svg)](https://www.npmjs.com/package/dotcloak)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 # dotcloak
 
 > Encrypt your `.env` so AI coding tools can only read ciphertext.
